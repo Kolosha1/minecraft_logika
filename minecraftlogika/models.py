@@ -18,6 +18,7 @@ class Tree(Button):
                          origin_y=.5,
                          shader=basic_lighting_shader,
                          **kwargs)
+        scene.trees[(self.x,self.y,self.z)] = self
 
 class Block(Button):
     current=DEFAULT_BLOCK
@@ -33,7 +34,8 @@ class Block(Button):
                          origin_y=-0.5,
                          shader=basic_lighting_shader,
                          **kwargs)
-        scene.blocks[(self.x,self.y,self.z)] = texture_id
+        self.id = texture_id
+        scene.blocks[(self.x,self.y,self.z)] = self
         
 
 class Map(Entity):
@@ -43,7 +45,7 @@ class Map(Entity):
          self.ground = Entity(model='plane',position=(MAP_SIZE//2,MAP_SIZE//2),collider='box', scale=MAP_SIZE, texture=block_textures[DEFAULT_BLOCK], texture_scale=(4,4))
          self.ground.y=-3
          self.noise = PerlinNoise(octaves=2,seed=6666)
-         self.bg_music = Audio(sound_file_name='assets\\audio\\crafting_game_music.mp3', autoplay=True,loop=True,volume=0.2)
+         self.bg_music = Audio(sound_file_name='assets/audio/pesni_iz_igri_majnkraft_-_calm_3_-_sweden_(z3.fm).mp3', autoplay=True,loop=True,volume=0.2)
 
 
 
@@ -75,8 +77,15 @@ class Player(FirstPersonController):
         super().input(key)
 
         if key == "left mouse down" and mouse.hovered_entity and mouse.hovered_entity!=self.map.ground:
-            self.destroy_sound.play()
+            if isinstance(mouse.hovered_entity,Block):
+                x,y,z = mouse.hovered_entity.position
+                del scene.blocks[x,y,z]
+            elif isinstance(mouse.hovered_entity, Tree):
+                x,y,z = mouse.hovered_entity.position
+                del scene.trees[x,y,z]
+                
             destroy(mouse.hovered_entity)
+            self.destroy_sound.play()
 
         if key == "right mouse down" and mouse.hovered_entity:
             hit_info=raycast(camera.world_position,camera.forward,distance=15)
